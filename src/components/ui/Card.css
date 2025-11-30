@@ -1,0 +1,11 @@
+.card {
+    border-radius: var(--radius-xl);
+    padding: 3rem;
+    /* Increased padding */
+    box-shadow: var(--shadow-xl);
+    /* Softer, larger shadow */
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+}
+
+/* Removed glassmorphism for a cleaner look */
