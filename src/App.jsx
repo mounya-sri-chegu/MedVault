@@ -1,21 +1,36 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Landing from "./pages/Landing";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
-function App() {
+// Patient
+import PatientAuth from "./pages/patient/PatientAuth";
+
+// Doctor
+import DoctorAuth from "./pages/doctor/DoctorAuth";
+import DoctorPending from "./pages/doctor/DoctorPending";
+
+// Admin
+import AdminLogin from "./pages/admin/AdminLogin";
+
+export default function App() {
   return (
-    <Router>
+    <BrowserRouter>
+      <Navbar />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/" element={<Landing />} />
+
+        {/* Patient */}
+        <Route path="/patient/auth" element={<PatientAuth />} />
+
+        {/* Doctor */}
+        <Route path="/doctor/auth" element={<DoctorAuth />} />
+        <Route path="/doctor/pending" element={<DoctorPending />} />
+
+        {/* Admin */}
+        <Route path="/admin/login" element={<AdminLogin />} />
       </Routes>
-    </Router>
+      <Footer />
+    </BrowserRouter>
   );
 }
-
-export default App;
