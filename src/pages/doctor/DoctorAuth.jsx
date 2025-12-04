@@ -3,8 +3,109 @@ import DOCTOR_IMAGE_URL from "../../assets/doctor.jpg";
 
 export default function DoctorAuth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [message, setMessage] = useState("");
 
-  // Floating label input style
+  // Form fields
+  const [form, setForm] = useState({
+    fullName: "",
+    license: "",
+    clinicName: "",
+    gender: "",
+    experience: "",
+    department: "",
+    specialization: "",
+    phone: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    consultationType: "",
+    document: null,
+  });
+
+  // Handle text/select inputs
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // Handle file upload
+  const handleFile = (e) => {
+    setForm({ ...form, document: e.target.files[0] });
+  };
+
+  // Clean switch handler (no useEffect needed)
+  const switchForm = () => {
+    setMessage("");
+    setForm({
+      fullName: "",
+      gender: "",
+      experience: "",
+      department: "",
+      specialization: "",
+      phone: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      consultationType: "",
+      document: null,
+    });
+    setIsLogin(!isLogin);
+  };
+
+  // API base URL
+  const API_URL = "http://localhost:5000/api/doctor";
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
+
+    try {
+      if (!isLogin) {
+        // Registration password match check
+        if (form.password !== form.confirmPassword) {
+          setMessage("Passwords do not match!");
+          return;
+        }
+
+        const formData = new FormData();
+        Object.keys(form).forEach((key) => {
+          formData.append(key, form[key]);
+        });
+
+        const res = await fetch(`${API_URL}/register`, {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          setMessage(data.message || "Registration failed");
+          return;
+        }
+
+        setMessage("Registration submitted for verification!");
+        setIsLogin(true);
+        return;
+      }
+
+      // LOGIN
+      const res = await fetch(`${API_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) return setMessage(data.message || "Invalid login");
+
+      localStorage.setItem("doctorToken", data.token);
+      setMessage("Login successful!");
+    } catch (err) {
+      setMessage("Server error. Try again later.");
+      console.error(err);
+    }
+  };
+
+  // UI classnames
   const inputWrapper = "relative w-full";
   const inputStyle =
     "w-full px-4 py-3 peer border border-gray-300 rounded-xl bg-white/60 backdrop-blur-md " +
@@ -15,23 +116,21 @@ export default function DoctorAuth() {
     "peer-valid:top-2 peer-valid:text-xs peer-valid:text-blue-600";
 
   const primaryButtonStyle =
-    "w-full py-3 rounded-xl bg-gradient-to-r from-blue-700 to-teal-600 text-white font-semibold " +
+    "w-full py-3 rounded-xl bg-gradient-to-r from-blue-700 to-teal-600 cursor-pointer text-white font-semibold " +
     "shadow-lg hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-blue-200 p-6 font-inter">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-100 to-blue-200 p-6 font-inter">
       <div className="flex flex-col lg:flex-row bg-white/40 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden max-w-6xl w-full border border-white/30">
-        {/* Left Section */}
+        {/* LEFT IMAGE SIDE */}
         <div className="lg:w-1/2 relative min-h-[520px]">
           <img
             src={DOCTOR_IMAGE_URL}
             alt="Doctor"
             className="absolute inset-0 w-full h-full object-cover p-17"
           />
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 to-teal-700/60 mix-blend-multiply"></div>
+          <div className="absolute inset-0 bg-linear-to-br from-blue-900/80 to-teal-700/60 mix-blend-multiply"></div>
 
-          {/* Text overlay */}
           <div className="absolute bottom-12 left-10 text-white space-y-3">
             <h1 className="text-4xl font-bold tracking-wide drop-shadow-lg">
               MediBook Professionals
@@ -42,30 +141,45 @@ export default function DoctorAuth() {
           </div>
         </div>
 
-        {/* Right Section */}
+        {/* RIGHT FORM SIDE */}
         <div className="lg:w-1/2 p-10 flex flex-col justify-center">
           <h2 className="text-4xl font-extrabold text-blue-800 mb-10 text-center font-poppins">
             {isLogin ? "Welcome Back" : "Create Your Professional Account"}
           </h2>
 
-          <form className="flex flex-col gap-6">
+          {message && (
+            <p className="text-center text-red-600 font-semibold mb-4">
+              {message}
+            </p>
+          )}
+
+          <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+            {/* REGISTRATION FIELDS */}
             {!isLogin ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Basic Fields */}
-                  {["Full Name", "Medical License #", "Clinic Name"].map(
-                    (placeholder, index) => (
-                      <div className={inputWrapper} key={index}>
-                        <input className={inputStyle} required />
-                        <label className={labelStyle}>{placeholder}</label>
-                      </div>
-                    )
-                  )}
+                  <div className={inputWrapper}>
+                    <input
+                      className={inputStyle}
+                      required
+                      name="fullName"
+                      value={form[name]}
+                      onChange={handleChange}
+                    />
+                    <label className={labelStyle}>Full Name</label>
+                  </div>
 
                   {/* Gender */}
                   <div className={inputWrapper}>
-                    <select className={`${inputStyle} bg-white`} required>
-                      <option value="" disabled selected></option>
+                    <select
+                      className={`${inputStyle} bg-white`}
+                      required
+                      name="gender"
+                      value={form.gender}
+                      onChange={handleChange}
+                    >
+                      <option value=""></option>
                       <option>Male</option>
                       <option>Female</option>
                       <option>Other</option>
@@ -73,21 +187,30 @@ export default function DoctorAuth() {
                     <label className={labelStyle}>Gender</label>
                   </div>
 
-                  {/* Years of Experience */}
+                  {/* Experience */}
                   <div className={inputWrapper}>
                     <input
                       className={inputStyle}
                       type="number"
                       min="0"
                       required
+                      name="experience"
+                      value={form.experience}
+                      onChange={handleChange}
                     />
                     <label className={labelStyle}>Years of Experience</label>
                   </div>
 
                   {/* Department */}
                   <div className={inputWrapper}>
-                    <select className={`${inputStyle} bg-white`} required>
-                      <option value="" disabled selected></option>
+                    <select
+                      className={`${inputStyle} bg-white`}
+                      required
+                      name="department"
+                      value={form.department}
+                      onChange={handleChange}
+                    >
+                      <option value=""></option>
                       <option>Emergency</option>
                       <option>Outpatient (OPD)</option>
                       <option>Radiology</option>
@@ -100,44 +223,64 @@ export default function DoctorAuth() {
                     <label className={labelStyle}>Hospital Department</label>
                   </div>
 
-                  {/* Specialization – Dropdown */}
+                  {/* Specialization */}
                   <div className={inputWrapper}>
-                    <select className={`${inputStyle} bg-white`} required>
-                      <option value="" disabled selected></option>
-                      <option>Cardiology</option>
-                      <option>Neurology</option>
-                      <option>Dermatology</option>
-                      <option>Psychiatry</option>
-                      <option>Orthopedics</option>
-                      <option>General Physician</option>
-                      <option>ENT Specialist</option>
-                      <option>Gastroenterology</option>
-                      <option>Urology</option>
-                      <option>Nephrology</option>
-                      <option>Gynecology</option>
-                      <option>Oncology</option>
+                    <select
+                      className={`${inputStyle} bg-white`}
+                      required
+                      name="specialization"
+                      value={form.specialization}
+                      onChange={handleChange}
+                    >
+                      <option value=""></option>
+                      {[
+                        "Cardiology",
+                        "Neurology",
+                        "Dermatology",
+                        "Psychiatry",
+                        "Orthopedics",
+                        "General Physician",
+                        "ENT Specialist",
+                        "Gastroenterology",
+                        "Urology",
+                        "Nephrology",
+                        "Gynecology",
+                        "Oncology",
+                      ].map((s, i) => (
+                        <option key={i}>{s}</option>
+                      ))}
                     </select>
                     <label className={labelStyle}>Specialization</label>
                   </div>
 
                   {/* Contact & Email */}
-                  {["Contact Phone", "Email Address"].map(
-                    (placeholder, index) => (
-                      <div className={inputWrapper} key={index}>
-                        <input
-                          className={inputStyle}
-                          type={index === 1 ? "email" : "tel"}
-                          required
-                        />
-                        <label className={labelStyle}>{placeholder}</label>
-                      </div>
-                    )
-                  )}
+                  {[
+                    ["phone", "Contact Phone", "tel"],
+                    ["email", "Email Address", "email"],
+                  ].map(([name, label, type], i) => (
+                    <div className={inputWrapper} key={i}>
+                      <input
+                        className={inputStyle}
+                        type={type}
+                        required
+                        name={name}
+                        value={form[name]}
+                        onChange={handleChange}
+                      />
+                      <label className={labelStyle}>{label}</label>
+                    </div>
+                  ))}
 
                   {/* Consultation Type */}
                   <div className={inputWrapper}>
-                    <select className={`${inputStyle} bg-white`} required>
-                      <option value="" disabled selected></option>
+                    <select
+                      className={`${inputStyle} bg-white`}
+                      required
+                      name="consultationType"
+                      value={form.consultationType}
+                      onChange={handleChange}
+                    >
+                      <option value=""></option>
                       <option>In-Person Only</option>
                       <option>Online Only</option>
                       <option>Both In-Person & Online</option>
@@ -153,36 +296,62 @@ export default function DoctorAuth() {
                   </label>
                   <input
                     className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg
-                file:border-0 file:text-sm file:font-semibold file:bg-blue-100 
-                file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
+                  file:border-0 file:text-sm file:font-semibold file:bg-blue-100 
+                  file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
                     type="file"
+                    onChange={handleFile}
                     required
                   />
                 </div>
 
                 {/* Passwords */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {["Password", "Confirm Password"].map((ph, i) => (
+                  {[
+                    ["password", "Password"],
+                    ["confirmPassword", "Confirm Password"],
+                  ].map(([name, label], i) => (
                     <div className={inputWrapper} key={i}>
-                      <input className={inputStyle} type="password" required />
-                      <label className={labelStyle}>{ph}</label>
+                      <input
+                        className={inputStyle}
+                        type="password"
+                        required
+                        name={name}
+                        value={form[name]}
+                        onChange={handleChange}
+                      />
+                      <label className={labelStyle}>{label}</label>
                     </div>
                   ))}
                 </div>
               </>
             ) : (
+              // ---------------- LOGIN FORM ----------------
               <div className="flex flex-col gap-4">
                 <div className={inputWrapper}>
-                  <input className={inputStyle} type="email" required />
+                  <input
+                    className={inputStyle}
+                    type="email"
+                    required
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                  />
                   <label className={labelStyle}>Email Address</label>
                 </div>
 
                 <div className={inputWrapper}>
-                  <input className={inputStyle} type="password" required />
+                  <input
+                    className={inputStyle}
+                    type="password"
+                    required
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                  />
                   <label className={labelStyle}>Password</label>
                 </div>
 
-                <a className="text-sm text-blue-600 hover:underline self-end font-medium -mt-2 cursor-pointer">
+                <a className="text-sm text-blue-600 hover:underline self-end font-medium -mt-2 mb-10 cursor-pointer">
                   Forgot Password?
                 </a>
 
@@ -190,7 +359,7 @@ export default function DoctorAuth() {
               </div>
             )}
 
-            <button className={primaryButtonStyle}>
+            <button type="submit" className={primaryButtonStyle}>
               {isLogin ? "Login Securely" : "Submit for Verification"}
             </button>
           </form>
@@ -198,8 +367,8 @@ export default function DoctorAuth() {
           <p className="mt-8 text-center text-gray-700">
             {isLogin ? "New to MediBook?" : "Already registered?"}{" "}
             <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-700 font-bold hover:underline"
+              onClick={switchForm}
+              className="text-blue-700 font-bold cursor-pointer hover:underline"
             >
               {isLogin ? "Register Now" : "Login Here"}
             </button>
@@ -209,9 +378,11 @@ export default function DoctorAuth() {
     </div>
   );
 }
+
+// LOGIN HELPER COMPONENT
 function LoginFiller() {
   return (
-    <div className="flex flex-col gap-4 flex-grow">
+    <div className="flex flex-col gap-4 grow">
       <div className="h-2"></div>
       <p className="text-sm text-gray-500 text-center leading-relaxed">
         Manage appointments, patient records, prescriptions, and more — securely
@@ -244,7 +415,7 @@ function LoginFiller() {
         </p>
       </div>
 
-      <div className="h-[120px] md:h-[160px]"></div>
+      <div className="h-[90px] md:h-90px]"></div>
     </div>
   );
 }
