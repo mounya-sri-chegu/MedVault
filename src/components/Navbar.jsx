@@ -48,14 +48,6 @@ export default function Navbar() {
               >
                 Login / Sign Up
               </Link>
-
-              {/* Admin */}
-              <Link
-                to="/admin/login"
-                className="text-gray-600 hover:text-gray-800 text-sm"
-              >
-                Admin Login
-              </Link>
             </>
           )}
 
